@@ -1,0 +1,113 @@
+{
+    "academic_year": 113,
+    "level": "junior",
+    "grade": "三",
+    "semester": "上",
+    "subject": "數學",
+    "chapter": "1",
+    "title": "分數的基本概念",
+    "quizzes": [
+        {
+            "quiz_type": "mcq",
+            "quiz_category": "basic-concept",
+            "source": "ai",
+            "question": "一條巧克力蛋糕被平分成 8 片，3 片是多少張巧克力蛋糕？",
+            "options": [
+                "$\\frac{3}{8}$ 張巧克力蛋糕",
+                "$\\frac{1}{8}$ 張巧克力蛋糕",
+                "$\\frac{3}{4}$ 張巧克力蛋糕",
+                "$\\frac{1}{4}$ 張巧克力蛋糕"
+            ],
+            "explanation": "選項 A 正確的原因是 3 片在 8 片中就是 $\\frac{3}{8}$ 張巧克力蛋糕。選項 B 是錯的，因為它是只計算 1 片。選項 C 是錯的，因為 $\\frac{3}{4}$ 並不適用於這個問題。選項 D 也不正確，因為它是將 3 片錯誤地解釋為 1 片的四分之一。",
+            "answer": 0
+        },
+        {
+            "quiz_type": "mcq",
+            "quiz_category": "basic-concept",
+            "source": "ai",
+            "question": "媽媽把一個鳳梨切成 5 片，宇朋拿了 2 片，是拿了幾分之幾的鳳梨？",
+            "options": [
+                "$\\frac{2}{5}$ 個鳳梨",
+                "$\\frac{1}{5}$ 個鳳梨",
+                "$\\frac{2}{10}$ 個鳳梨",
+                "$\\frac{3}{5}$ 個鳳梨"
+            ],
+            "explanation": "選項 A 正確的原因是 宇朋拿的 2 片在 5 片中就是 $\\frac{2}{5}$ 個鳳梨。選項 B 是錯的，因為它代表的是只有 1 片的鳳梨。選項 C 是錯的，因為 $\\frac{2}{10}$ 是不正確的分數表示法。選項 D 不正確，因為它表示的片數與拿的片數不符合。",
+            "answer": 0
+        },
+        {
+            "quiz_type": "mcq",
+            "quiz_category": "basic-concept",
+            "source": "ai",
+            "question": "一盒球有 9 顆，王小明吃了 3 顆，他吃了幾盒球？",
+            "options": [
+                "$\\frac{1}{3}$ 盒球",
+                "$\\frac{1}{9}$ 盒球",
+                "$\\frac{3}{9}$ 盒球",
+                "$\\frac{3}{4}$ 盒球"
+            ],
+            "explanation": "選項 C 正確的原因是 王小明吃了 3 顆球，這是整個盒子的 $\\frac{3}{9}$，即 3 顆在 9 顆中。選項 A 是錯的，因為代表的數量不對。選項 B 也是錯的，因為它太小，沒有代表王小明所吃的數量。選項 D 亦不正確，因為 $\\frac{3}{4}$ 不是他吃的比例。",
+            "answer": 2
+        },
+        {
+            "quiz_type": "mcq",
+            "quiz_category": "basic-concept",
+            "source": "ai",
+            "question": "小玲買了一盒餅乾有 12 片，她吃了 4 片，那麼她吃了幾盒餅乾？",
+            "options": [
+                "$\\frac{1}{3}$ 盒餅乾",
+                "$\\frac{4}{12}$ 盒餅乾",
+                "$\\frac{2}{3}$ 盒餅乾",
+                "$\\frac{1}{2}$ 盒餅乾"
+            ],
+            "explanation": "選項 B 正確的原因是 小玲吃的 4 片正好是 $\\frac{4}{12}$ 盒餅乾。選項 A 是錯的，它沒有正確反映她的食用比例。選項 C 也是錯的，因為她吃的數量不符合。選項 D 不正確，因為其比例與實際情況不符。",
+            "answer": 1
+        },
+        {
+            "quiz_type": "mcq",
+            "quiz_category": "basic-concept",
+            "source": "ai",
+            "question": "一條香蕉被平分成 5 份，妍妍吃了 $\\frac{1}{5}$ 份，這樣她吃了幾條香蕉？",
+            "options": [
+                "$\\frac{1}{5}$ 條香蕉",
+                "$\\frac{2}{5}$ 條香蕉",
+                "$\\frac{1}{4}$ 條香蕉",
+                "$\\frac{1}{2}$ 條香蕉"
+            ],
+            "explanation": "選項 A 正確的原因是 妍妍吃了整條香蕉的 $\\frac{1}{5}$，因此就是 $\\frac{1}{5}$ 條香蕉。選項 B 是錯的，因為她只吃了 1 份，應該是 $\\frac{1}{5}$。選項 C 和 D 也錯誤，因為它們表示的份量都不正確。",
+            "answer": 0
+        },
+        {
+            "quiz_type": "mcq",
+            "quiz_category": "basic-concept",
+            "source": "ai",
+            "question": "一箱蘋果裡有 8 顆，亞瑟吃了 $\\frac{5}{8}$ 顆，這樣他吃了幾顆蘋果？",
+            "options": [
+                "5 顆蘋果",
+                "4 顆蘋果",
+                "8 顆蘋果",
+                "$\\frac{3}{8}$ 顆蘋果"
+            ],
+            "explanation": "選項 A 正確的原因是 亞瑟吃的 $\\frac{5}{8}$ 意味著他實際上吃了 5 顆蘋果。選項 B 錯誤，因為他吃的數量多於 4 顆。選項 C 不正確，因為整箱的數量不是他所吃的數量。選項 D 顯然也是錯的，因為他食用的數量超過了這個比例。",
+            "answer": 0
+        },
+        {
+            "quiz_type": "saq",
+            "quiz_category": "basic-concept",
+            "source": "ai",
+            "question": "一盒餅乾有 10 片。小明拿了 4 片，佳佳拿了 $\\frac{5}{10}$ 盒，誰拿的餅乾比較多？",
+            "options": [],
+            "explanation": "小明拿了 4 片，而佳佳拿了 $\\frac{5}{10}$ 盒，也就是 5 片，所以佳佳拿的餅乾比較多。",
+            "answer": -1
+        },
+        {
+            "quiz_type": "saq",
+            "quiz_category": "basic-concept",
+            "source": "ai",
+            "question": "一盒檸檬塔有 8 個，宇翔吃了 $\\frac{3}{8}$ 盒，姊姊吃了 $\\frac{5}{8}$ 盒，誰吃的比較少？",
+            "options": [],
+            "explanation": "宇翔吃了 $\\frac{3}{8}$ 盒，而姊姊吃了 $\\frac{5}{8}$ 盒，因此宇翔吃的比較少。",
+            "answer": -1
+        }
+    ]
+}

@@ -1,0 +1,14 @@
+annotated-types==0.7.0
+certifi==2025.4.26
+charset-normalizer==3.4.2
+idna==3.10
+latex2mathml==3.77.0
+latex2word==1.1
+lxml==5.3.2
+mathml2omml==0.0.2
+pydantic==2.10.6
+pydantic_core==2.27.2
+python-docx==1.1.2
+requests==2.32.3
+typing_extensions==4.12.2
+urllib3==2.4.0
