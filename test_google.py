@@ -1,9 +1,7 @@
-
-
 import requests
 
-api_key = "AIzaSyDPAuCm0L57GXA9BRtJW99OfkbaGOFR9m4"
-cse_id = "473a32c3838b64a54"
+api_key = ""
+cse_id = ""
 
 query = "多采多姿的植物"
 num_results = 10
