@@ -1,0 +1,21 @@
+* text eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.svg binary
+*.webp binary
+*.mp4 binary
+*.mov binary
+*.avi binary
+*.mkv binary
+
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+
+*.zip binary
+*.pdf binary
+*.docx binary
