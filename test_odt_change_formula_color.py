@@ -1,8 +1,13 @@
+from enum import StrEnum
 import os
 import shutil
 import sys
 import xml.etree.ElementTree as ET
 import zipfile
+
+UNZIPPED_STYLE_FILE = 'styles.xml'
+UNZIPPED_CONTENT_FILE = 'content.xml'
+UNZIPPED_OBJECT_CONTENT_FILE = 'content.xml'
 
 OPENDOCUMENT_NAMESPACES = {
     'style': 'urn:oasis:names:tc:opendocument:xmlns:style:1.0',
@@ -10,10 +15,18 @@ OPENDOCUMENT_NAMESPACES = {
     'text': 'urn:oasis:names:tc:opendocument:xmlns:text:1.0',
     'draw': 'urn:oasis:names:tc:opendocument:xmlns:drawing:1.0',
     'xlink': 'http://www.w3.org/1999/xlink',
+    'math': 'http://www.w3.org/1998/Math/MathML',
 }
 
 
-def get_style_color(style_element: ET) -> str:
+class FormulaColor(StrEnum):
+    RED = "#FF0000"
+    BLUE = "#0000FF"
+    GREEN = "#00FF00"
+    BLACK = "#000000"
+
+
+def get_style_color_from_xml(style_element: ET) -> str:
     text_props = style_element.find('style:text-properties', OPENDOCUMENT_NAMESPACES)
     if text_props is not None:
         color = text_props.get(f"{{{OPENDOCUMENT_NAMESPACES['fo']}}}color")
@@ -21,137 +34,153 @@ def get_style_color(style_element: ET) -> str:
     return None
 
 
-def list_red_styles_in_styles_xml(element: ET.Element):
-    red_styles = []
+def list_color_styles_in_styles_xml(unzipped_odt_path: str, color: FormulaColor) -> list[str]:
+    # Load the styles.xml file
+    styles_file = os.path.join(unzipped_odt_path, UNZIPPED_STYLE_FILE)
+    if not os.path.exists(styles_file):
+        raise FileNotFoundError(f"Styles file {styles_file} does not exist.")
+    element = ET.parse(styles_file).getroot()
+
+    color_style_name_list = []
     for style in element.findall('.//style:style', OPENDOCUMENT_NAMESPACES):
         style_name = style.get(f"{{{OPENDOCUMENT_NAMESPACES['style']}}}name")
-        color = get_style_color(style)
-        if color:
-            if color == '#ff0000':
+        style_color = get_style_color_from_xml(style)
+        if style_color:
+            if style_color.lower() == color.value.lower():
                 style_name = style_name
                 if style_name:
-                    red_styles.append(style_name)
+                    color_style_name_list.append(style_name)
         else:
+            # Check if the style has a parent style with the specified color
             parent_style_name = style.get(f"{{{OPENDOCUMENT_NAMESPACES['style']}}}parent-style-name")
-            print(f"  Parent style: {parent_style_name}")
-            if parent_style_name in red_styles:
-                red_styles.append(style_name)
-    return red_styles
+            if parent_style_name in color_style_name_list:
+                color_style_name_list.append(style_name)
+    return color_style_name_list
 
 
-def list_objects_with_red_style_in_content_xml(content_element: ET.Element, red_styles: list[str]):
-    red_object_path = []
+def list_objects_with_style_in_content_xml(unzipped_odt_path: str, style_name_list: list[str]):
+    # Load the content.xml file
+    content_file = os.path.join(unzipped_odt_path, UNZIPPED_CONTENT_FILE)
+    if not os.path.exists(content_file):
+        raise FileNotFoundError(f"Content file {content_file} does not exist.")
+    content_element = ET.parse(content_file).getroot()
+
+    # List styles with parent style name in style_name_list
+    for style in content_element.findall('.//style:style', OPENDOCUMENT_NAMESPACES):
+        style_name = style.get(f"{{{OPENDOCUMENT_NAMESPACES['style']}}}name")
+        parent_style_name = style.get(f"{{{OPENDOCUMENT_NAMESPACES['style']}}}parent-style-name")
+        if parent_style_name in style_name_list:
+            style_name_list.append(style_name)
+
+    # Find all objects in text with style in style_name_list
+    object_path_list = []
+    object_image_path_list = []
     for elem in content_element.findall('.//text:p', OPENDOCUMENT_NAMESPACES):
         style_name = elem.get(f"{{{OPENDOCUMENT_NAMESPACES['text']}}}style-name")
-        if style_name in red_styles:
+        if style_name in style_name_list:
             frames = elem.findall('.//draw:frame', OPENDOCUMENT_NAMESPACES)
             for frame in frames:
                 object = frame.find('.//draw:object', OPENDOCUMENT_NAMESPACES)
                 if object is not None:
                     object_path = object.get(f"{{{OPENDOCUMENT_NAMESPACES['xlink']}}}href")
                     if object_path:
-                        red_object_path.append(object_path)
-    return red_object_path
+                        object_path_list.append(object_path)
+                image = frame.find('.//draw:image', OPENDOCUMENT_NAMESPACES)
+                if image is not None:
+                    image_path = image.get(f"{{{OPENDOCUMENT_NAMESPACES['xlink']}}}href")
+                    if image_path:
+                        object_image_path_list.append(image_path)
+                    frame.remove(image)
+
+    # Save the modified content.xml back to the file
+    content_xml_str = ET.tostring(content_element, encoding="UTF-8", xml_declaration=True).decode('utf-8')
+    with open(content_file, 'w', encoding='utf-8') as f:
+        f.write(content_xml_str)
+
+    # Remove the images from content.xml
+    for image_path in object_image_path_list:
+        image_file = os.path.join(unzipped_odt_path, image_path)
+        if os.path.exists(image_file):
+            os.remove(image_file)
+
+    return object_path_list
 
 
-def change_formula_color_in_object_content_xml(content_element: ET.Element, namespaces: dict):
+def change_formula_color_in_object_content_xml(unzipped_odt_path: str, object_path: str, color: FormulaColor):
+    # Load object's content.xml file
+    object_content_file = os.path.join(unzipped_odt_path, object_path, UNZIPPED_OBJECT_CONTENT_FILE)
+    if not os.path.exists(object_content_file):
+        raise FileNotFoundError(f"Content file {object_content_file} does not exist.")
+    object_content_element = ET.parse(object_content_file).getroot()
+
     # Find the <semantics> element
-    semantics: ET.Element = content_element.find('m:semantics', namespaces)
+    semantics: ET.Element = object_content_element.find('math:semantics', OPENDOCUMENT_NAMESPACES)
     if semantics is None:
         raise ValueError("No <semantics> element found in the content XML.")
 
     # Find the <mfrac> and <annotation> elements
-    frac_element: ET.Element = semantics.find('m:mfrac', namespaces)
-    annotation_element: ET.Element = semantics.find('m:annotation', namespaces)
+    frac_element: ET.Element = semantics.find('math:mfrac', OPENDOCUMENT_NAMESPACES)
+    annotation_element: ET.Element = semantics.find('math:annotation', OPENDOCUMENT_NAMESPACES)
     if frac_element is None or annotation_element is None:
         raise ValueError("No <mfrac> or <annotation> element found in the content XML.")
 
-    # Remove <mfrac> from its parent element
+    # Move the <mfrac> element to a new <mstyle> element with color red
     frac_index = list(semantics).index(frac_element)
     semantics.remove(frac_element)
-
-    # Create a new <mstyle> element and set its color attribute
-    style_element = ET.Element('mstyle', {'mathcolor': 'red'})
-
-    # Append the <mfrac> element to the new <mstyle> element
+    style_element = ET.Element('mstyle', {'mathcolor': color.name.lower()})
     style_element.append(frac_element)
-
-    # Insert the new <mstyle> element back into its original position
     semantics.insert(frac_index, style_element)
 
     # Modify the <annotation> text content
     original_text = annotation_element.text
-    annotation_element.text = f"color red {{{original_text}}}"
+    annotation_element.text = f"color {color.name.lower()} {{{original_text}}}"
+
+    # Save the modified content.xml back to the file
+    object_content_xml_str = ET.tostring(object_content_element, encoding="UTF-8", xml_declaration=True).decode('utf-8')
+    with open(object_content_file, 'w', encoding='utf-8') as f:
+        f.write(object_content_xml_str)
 
 
-def process_odt_document(file_path: str):
-    tmp_folder = "tmp_odt"
+def change_formula_color_if_styled_in_odt(odt_file_path: str, color: FormulaColor):
+    tmp_folder = f"{os.path.basename(odt_file_path[:odt_file_path.rfind('.')])}_tmp"
     if os.path.exists(tmp_folder):
-        shutil.rmtree(tmp_folder)
+        raise FileExistsError(f"Temporary folder {tmp_folder} already exists. Please remove it before proceeding.")
     os.makedirs(tmp_folder, exist_ok=True)
 
-    # unzip the ODT file
-    with zipfile.ZipFile(file_path, 'r') as zip_ref:
+    # Unzip the ODT file
+    with zipfile.ZipFile(odt_file_path, 'r') as zip_ref:
         zip_ref.extractall(tmp_folder)
 
-    # list style names with RED color in the styles.xml
-    styles_file = os.path.join(tmp_folder, 'styles.xml')
-    if not os.path.exists(styles_file):
-        print(f"Error: {styles_file} does not exist.")
-        return
-    root = ET.parse(styles_file).getroot()
-    # find all <style:style> elements in the document
-    red_styles = list_red_styles_in_styles_xml(root)
-    if red_styles:
-        print("Styles with RED color:")
-        for style in red_styles:
-            print(f"  - {style}")
-    else:
-        print("  No styles with RED color found.")
+    # List style names with the specified color in the styles.xml
+    color_styles = list_color_styles_in_styles_xml(tmp_folder, color)
 
-    # find all objects in text with RED color style in content.xml
-    content_file = os.path.join(tmp_folder, 'content.xml')
-    if not os.path.exists(content_file):
-        print(f"Error: {content_file} does not exist.")
-        return
-    root = ET.parse(content_file).getroot()
-    red_objects = list_objects_with_red_style_in_content_xml(root, red_styles)
-    if red_objects:
-        print("Objects with RED color style in content:")
-        for obj in red_objects:
-            print(f"  - {obj}")
-    else:
-        print("  No objects with RED color style found in content.")
+    # Find all objects in text with the specified color style in content.xml
+    red_objects = list_objects_with_style_in_content_xml(tmp_folder, color_styles)
 
     # Modify the object content.xml to change the color of formulas
-    namespace = 'http://www.w3.org/1998/Math/MathML'
-    namespaces = {'m': namespace}
-    ET.register_namespace('', namespace)
     for obj in red_objects:
-        object_content_file = os.path.join(tmp_folder, obj, 'content.xml')
-        root = ET.parse(object_content_file).getroot()
-        change_formula_color_in_object_content_xml(root, namespaces)
-        # Save the modified content.xml back to the file
-        root_str = ET.tostring(root, encoding="UTF-8", xml_declaration=True).decode('utf-8')
-        print(f"Modified content for object {obj}:\n{root_str}")
-        with open(object_content_file, 'w', encoding='utf-8') as f:
-            f.write(root_str)
-    # Remove the namespace registration
-    ET.register_namespace('', '')
+        change_formula_color_in_object_content_xml(tmp_folder, obj, color)
 
     # Repackage the ODT file
-    odt_file = file_path.replace('.odt', '_modified.odt')
-    with zipfile.ZipFile(odt_file, 'w') as zip_ref:
+    new_odt_file = odt_file_path.replace('.odt', '_modified.odt')
+    with zipfile.ZipFile(new_odt_file, 'w') as zip_ref:
         for foldername, subfolders, filenames in os.walk(tmp_folder):
             for filename in filenames:
                 file_path = os.path.join(foldername, filename)
                 arcname = os.path.relpath(file_path, tmp_folder)
                 zip_ref.write(file_path, arcname)
 
+    # Replace the original file with the modified one
+    shutil.move(new_odt_file, odt_file_path)
+
+    # Clean up the temporary folder
+    shutil.rmtree(tmp_folder)
+
 
 def main():
     odt_file = "test_odt.odt"
-    process_odt_document(odt_file)
+    change_formula_color_if_styled_in_odt(odt_file, FormulaColor.RED)
+    print(f"The formula color in {odt_file} has been changed to {FormulaColor.RED.name.lower()}.")
 
 
 if __name__ == "__main__":
