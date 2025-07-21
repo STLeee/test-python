@@ -157,7 +157,7 @@ def change_formula_color_if_styled_in_xmls(unzipped_odt_path: str, color: Formul
         change_formula_color_in_object_content_xml(unzipped_odt_path, obj, color)
 
 
-def modify_formula_style_in_content_xml(unzipped_odt_path: str, formula_base_pt: int = 4.1):
+def modify_formula_style_in_content_xml(unzipped_odt_path: str, height_base_pt: int = 4.1):
     # Load the content.xml file
     content_file = os.path.join(unzipped_odt_path, UNZIPPED_CONTENT_FILE)
     if not os.path.exists(content_file):
@@ -190,9 +190,18 @@ def modify_formula_style_in_content_xml(unzipped_odt_path: str, formula_base_pt:
             if height_str is None:
                 continue
             height_num = float(height_str[:-2])  # Remove 'pt' and convert to int
-            # Set frame svg:y to -(height/2 + formula_base_pt)
-            frame_y = -(height_num / 2 + formula_base_pt)
-            frame.set(f"{{{OPENDOCUMENT_NAMESPACES['svg']}}}y", f"{frame_y}pt")
+            height_unit = height_str[-2:]  # Get the unit (should be 'pt')
+            if height_unit == "pt":
+                height_base = height_base_pt
+            elif height_unit == "cm":
+                height_base = height_base_pt * 0.0352778
+            elif height_unit == "in":
+                height_base = height_base_pt / 72.0
+            else:
+                raise ValueError(f"Unsupported unit: {height_unit}")
+            # Set frame svg:y to -(height/2 + height_base)
+            frame_y = -(height_num / 2 + height_base)
+            frame.set(f"{{{OPENDOCUMENT_NAMESPACES['svg']}}}y", f"{frame_y}{height_unit}")
             modified = True
 
     if modified:
@@ -237,9 +246,9 @@ def fix_odt_formula_style(odt_file_path: str, color: FormulaColor):
                 zip_ref.write(file_path, arcname)
 
     # Replace the original file with the modified one
-    if os.path.exists(odt_file_path):
-        os.remove(odt_file_path)
-    shutil.move(new_odt_file, odt_file_path)
+    # if os.path.exists(odt_file_path):
+    #     os.remove(odt_file_path)
+    # shutil.move(new_odt_file, odt_file_path)
 
     # Clean up the temporary folder
     shutil.rmtree(tmp_folder)
