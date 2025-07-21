@@ -114,30 +114,32 @@ def change_formula_color_in_object_content_xml(unzipped_odt_path: str, object_pa
     object_content_element = ET.parse(object_content_file).getroot()
 
     # Find the <semantics> element
-    semantics: ET.Element = object_content_element.find('math:semantics', OPENDOCUMENT_NAMESPACES)
+    semantics: ET.Element = object_content_element.find("math:semantics", OPENDOCUMENT_NAMESPACES)
     if semantics is None:
         raise ValueError("No <semantics> element found in the content XML.")
+    if len(semantics) == 0:
+        raise ValueError("The <semantics> element is empty, no content to modify.")
 
-    # Find the <mfrac> and <annotation> elements
-    frac_element: ET.Element = semantics.find('math:mfrac', OPENDOCUMENT_NAMESPACES)
-    annotation_element: ET.Element = semantics.find('math:annotation', OPENDOCUMENT_NAMESPACES)
-    if frac_element is None or annotation_element is None:
-        raise ValueError("No <mfrac> or <annotation> element found in the content XML.")
-
-    # Move the <mfrac> element to a new <mstyle> element with color red
-    frac_index = list(semantics).index(frac_element)
-    semantics.remove(frac_element)
-    style_element = ET.Element('mstyle', {'mathcolor': color.name.lower()})
-    style_element.append(frac_element)
-    semantics.insert(frac_index, style_element)
+    # Move all children but <annotation> of <semantics> to a new <mstyle> element with the specified color
+    style_element = ET.Element("mstyle", {"mathcolor": color.name.lower()})
+    for child in list(semantics):
+        if child.tag != f"{{{OPENDOCUMENT_NAMESPACES['math']}}}annotation":
+            semantics.remove(child)
+            style_element.append(child)
+    semantics.insert(0, style_element)
 
     # Modify the <annotation> text content
-    original_text = annotation_element.text
-    annotation_element.text = f"color {color.name.lower()} {{{original_text}}}"
+    annotation_element: ET.Element = semantics.find("math:annotation", OPENDOCUMENT_NAMESPACES)
+    if annotation_element is not None:
+        original_text = annotation_element.text
+        annotation_element.text = f"color {color.name.lower()} {{{original_text}}}"
+        print(f"Annotation: {original_text} -> {annotation_element.text}")
+    else:
+        print("No <annotation> element found in the content XML.")
 
     # Save the modified content.xml back to the file
-    object_content_xml_str = ET.tostring(object_content_element, encoding="UTF-8", xml_declaration=True).decode('utf-8')
-    with open(object_content_file, 'w', encoding='utf-8') as f:
+    object_content_xml_str = ET.tostring(object_content_element, encoding="UTF-8", xml_declaration=True).decode("utf-8")
+    with open(object_content_file, "w", encoding="utf-8") as f:
         f.write(object_content_xml_str)
 
 
@@ -171,6 +173,8 @@ def change_formula_color_if_styled_in_odt(odt_file_path: str, color: FormulaColo
                 zip_ref.write(file_path, arcname)
 
     # Replace the original file with the modified one
+    if os.path.exists(odt_file_path):
+        os.remove(odt_file_path)
     shutil.move(new_odt_file, odt_file_path)
 
     # Clean up the temporary folder
